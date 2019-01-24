@@ -1,0 +1,404 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_KEYS DIALOG DISCARDABLE  0, 0, 394, 234
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Keys Settings"
+FONT 8, "MS Sans Serif"
+BEGIN
+    RTEXT           "Left: ",IDC_STATIC,9,33,20,8
+    RTEXT           "Right: ",IDC_STATIC,69,33,30,8
+    RTEXT           "Counterclockwise: ",IDC_STATIC,10,52,61,8
+    RTEXT           "Clockwise:",IDC_STATIC,13,65,56,8
+    RTEXT           "Fast Drop: ",IDC_STATIC,31,91,40,8
+    RTEXT           "Instant Drop: ",IDC_STATIC,15,78,56,8
+    EDITTEXT        IDC_LEFT,29,31,36,12
+    EDITTEXT        IDC_RIGHT,100,31,36,12
+    EDITTEXT        IDC_ROTATE,73,50,36,12
+    EDITTEXT        IDC_REVROTATE,73,63,36,12
+    EDITTEXT        IDC_FAST,73,89,36,12
+    EDITTEXT        IDC_DROP,73,76,36,12
+    CONTROL         "",IDC_REPEATHOR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    144,20,10,8
+    RTEXT           "Initial Delay: ",IDC_STATIC,158,31,47,8
+    EDITTEXT        IDC_INITHORDELAY,207,30,36,12,ES_AUTOHSCROLL | ES_NUMBER
+    RTEXT           "Repeat Delay: ",IDC_STATIC,259,32,47,8
+    EDITTEXT        IDC_HORDELAY,307,30,36,12,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "",IDC_REPEATROT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    145,59,9,8
+    RTEXT           "Initial Delay: ",IDC_STATIC,158,70,47,8
+    EDITTEXT        IDC_INITROTDELAY,207,67,36,12,ES_AUTOHSCROLL | ES_NUMBER
+    RTEXT           "Repeat Delay: ",IDC_STATIC,259,70,47,8
+    EDITTEXT        IDC_ROTDELAY,307,67,36,12,ES_AUTOHSCROLL | ES_NUMBER
+    RTEXT           "Fast Drop Speed:",IDC_STATIC,142,91,57,8
+    EDITTEXT        IDC_FASTSPEED,204,89,36,12,ES_AUTOHSCROLL | ES_NUMBER
+    DEFPUSHBUTTON   "OK",IDOK,285,211,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,336,211,50,14
+    GROUPBOX        "Horizontal Repeat",IDC_STATIC,155,17,226,31
+    GROUPBOX        "Rotational Repeat",IDC_STATIC,156,55,210,30
+    GROUPBOX        "Player 1",IDC_STATIC,7,7,379,100
+    RTEXT           "Left: ",IDC_STATIC,9,136,20,8
+    RTEXT           "Right: ",IDC_STATIC,69,136,30,8
+    RTEXT           "Counterclockwise: ",IDC_STATIC,10,155,61,8
+    RTEXT           "Clockwise:",IDC_STATIC,13,168,56,8
+    RTEXT           "Fast Drop: ",IDC_STATIC,31,194,40,8
+    RTEXT           "Instant Drop: ",IDC_STATIC,15,181,56,8
+    EDITTEXT        IDC_LEFT2,29,134,36,12
+    EDITTEXT        IDC_RIGHT2,100,134,36,12
+    EDITTEXT        IDC_ROTATE2,73,153,36,12
+    EDITTEXT        IDC_REVROTATE2,73,166,36,12
+    EDITTEXT        IDC_FAST2,73,192,36,12
+    EDITTEXT        IDC_DROP2,73,179,36,12
+    CONTROL         "",IDC_REPEATHOR2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    144,123,10,8
+    RTEXT           "Initial Delay: ",IDC_STATIC,158,134,47,8
+    EDITTEXT        IDC_INITHORDELAY2,207,133,36,12,ES_AUTOHSCROLL | 
+                    ES_NUMBER
+    RTEXT           "Repeat Delay: ",IDC_STATIC,259,135,47,8
+    EDITTEXT        IDC_HORDELAY2,307,133,36,12,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "",IDC_REPEATROT2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    145,162,9,8
+    RTEXT           "Initial Delay: ",IDC_STATIC,158,173,47,8
+    EDITTEXT        IDC_INITROTDELAY2,207,170,36,12,ES_AUTOHSCROLL | 
+                    ES_NUMBER
+    RTEXT           "Repeat Delay: ",IDC_STATIC,259,173,47,8
+    EDITTEXT        IDC_ROTDELAY2,307,170,36,12,ES_AUTOHSCROLL | ES_NUMBER
+    RTEXT           "Fast Drop Speed:",IDC_STATIC,142,194,57,8
+    EDITTEXT        IDC_FASTSPEED2,204,192,36,12,ES_AUTOHSCROLL | ES_NUMBER
+    GROUPBOX        "Horizontal Repeat",IDC_STATIC,155,120,226,31
+    GROUPBOX        "Rotational Repeat",IDC_STATIC,156,158,210,30
+    GROUPBOX        "Player 2",IDC_STATIC,7,110,379,100
+END
+
+IDD_ABOUT DIALOG DISCARDABLE  0, 0, 299, 58
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "About Schmitriz"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT           "HighscorePicture",IDC_HIGH,36,44,247,8
+    LTEXT           "GamePicture",IDC_GAME,36,35,248,8
+    DEFPUSHBUTTON   "OK",IDOK,242,7,50,14
+    LTEXT           "Schmitriz Version 1.06c",IDC_STATIC,36,9,113,11
+    LTEXT           "Copyright© 2003 Michael Schmitz",IDC_STATIC,36,20,113,
+                    11
+    ICON            IDI_ICON,IDC_STATIC,9,9,20,20
+END
+
+IDD_TILESET DIALOG DISCARDABLE  0, 0, 114, 111
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Tileset Settings"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,7,90,50,14,NOT WS_VISIBLE
+    PUSHBUTTON      "Cancel",IDCANCEL,57,90,50,14,NOT WS_VISIBLE
+    LISTBOX         IDC_LIST,7,7,100,97,LBS_SORT | LBS_NOINTEGRALHEIGHT | 
+                    WS_VSCROLL | WS_TABSTOP
+END
+
+IDD_THEME DIALOG DISCARDABLE  0, 0, 114, 111
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Theme Settings"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,7,90,50,14,NOT WS_VISIBLE
+    PUSHBUTTON      "Cancel",IDCANCEL,57,90,50,14,NOT WS_VISIBLE
+    LISTBOX         IDC_LIST,7,7,100,97,LBS_SORT | LBS_NOINTEGRALHEIGHT | 
+                    WS_VSCROLL | WS_TABSTOP
+END
+
+IDD_INSTRUCTIONS DIALOG DISCARDABLE  0, 0, 255, 198
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Instructions"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,198,7,50,14
+    LTEXT           "Single player Schmitriz is similar to the classic Tetris game. The goal is to achieve a high score by clearing as many lines and dropping as many pieces as possible. Once",
+                    IDC_STATIC,7,7,185,25
+    LTEXT           "a line is filled it clears, or erases. Everything above the cleared line shifts down, giving the player more space.",
+                    IDC_STATIC,7,31,186,17
+    LTEXT           "Two player Schmitriz plays like the single player version with the exception that player one plays from the top and player two plays from the bottom. The thick line which starts in the middle divides the players' space. The",
+                    IDC_STATIC,7,51,234,24
+    LTEXT           "border line will move if a player clears the line adjacent to it. For example, if player one clears his lower most line, the border line will shift down one, increasing his/her space and decreasing player two's space.",
+                    IDC_STATIC,7,75,234,24
+    ICON            IDI_ICON1,IDC_STATIC,211,26,20,20
+    LTEXT           "Scoring is as follows for each piece dropped:\n\n\t5 + 2 * [Level] + [Height]\n\n\tIf Show Next Piece is on, the value { [Level] / 2 + 2 }\n\tis subtracted from the score.",
+                    IDC_STATIC,7,105,231,48
+    LTEXT           "[Level] is zero-indexed, meaning the first level is level 0.\n[Height] is equal to either the height the piece lands or the height at which it was instant dropped.",
+                    IDC_STATIC,7,159,234,24
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_KEYS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 386
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 225
+    END
+
+    IDD_ABOUT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 292
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 51
+    END
+
+    IDD_TILESET, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 107
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 104
+    END
+
+    IDD_THEME, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 107
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 104
+    END
+
+    IDD_INSTRUCTIONS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 248
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 191
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MENU MENU DISCARDABLE 
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&New Game\tCtrl+N",           IDM_FILE_NEW
+        MENUITEM "&Pause Game\tCtrl+P",         IDM_FILE_PAUSE
+        MENUITEM "&End Game\tCtrl+E",           IDM_FILE_END
+        MENUITEM SEPARATOR
+        MENUITEM "Show Highscores\tCtrl+H",     IDM_FILE_HIGHSCORE
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit\tCtrl+Q",               IDM_FILE_EXIT
+    END
+    POPUP "&Options"
+    BEGIN
+        MENUITEM "&Key Settings...\tCtrl+K",    IDM_OPTIONS_KEYS
+        MENUITEM "&Tileset Settings...\tCtrl+T", IDM_OPTIONS_TILESET
+        MENUITEM "Theme Settings...\tCtrl+H",   IDM_OPTIONS_THEME
+        MENUITEM SEPARATOR
+        MENUITEM "&Show Grid\tCtrl+G",          IDM_OPTIONS_SHOWGRID
+        MENUITEM SEPARATOR
+        POPUP "Player 1"
+        BEGIN
+            MENUITEM "Show &Highscore\tF2",         IDM_OPTIONS_SHOWHIGHSCORE1
+            , CHECKED
+            MENUITEM "Show S&core\tF3",             IDM_OPTIONS_SHOWSCORE1
+            , CHECKED
+            MENUITEM "Show L&evel\tF4",             IDM_OPTIONS_SHOWLEVEL1
+            , CHECKED
+            MENUITEM "Show Lines &Cleared\tF5",     IDM_OPTIONS_SHOWLINES1
+            , CHECKED
+            MENUITEM "Show &Next Piece\tF6",        IDM_OPTIONS_SHOWNEXTPIECE1
+            , CHECKED
+        END
+        POPUP "Player 2"
+        BEGIN
+            MENUITEM "Show &Highscore\tF7",         IDM_OPTIONS_SHOWHIGHSCORE2
+
+            MENUITEM "Show S&core\tF8",             IDM_OPTIONS_SHOWSCORE2
+            MENUITEM "Show L&evel\tF9",             IDM_OPTIONS_SHOWLEVEL2
+            MENUITEM "Show Lines &Cleared\tF10",    IDM_OPTIONS_SHOWLINES2
+            MENUITEM "Show &Next Piece\tF12",       IDM_OPTIONS_SHOWNEXTPIECE2
+
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "Pause on Loose Focus",        IDM_OPTIONS_PAUSEON, CHECKED
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&Instructions\t?",            IDM_HELP_INSTRUCTIONS
+        MENUITEM "&Schmitztech.com\t!",         IDM_HELP_SCHMITZTECH
+        MENUITEM SEPARATOR
+        MENUITEM "&About",                      IDM_HELP_ABOUT
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDR_ACCEL ACCELERATORS DISCARDABLE 
+BEGIN
+    "!",            IDM_HELP_SCHMITZTECH,   ASCII,  NOINVERT
+    "?",            IDM_HELP_INSTRUCTIONS,  ASCII,  NOINVERT
+    "E",            IDM_FILE_END,           VIRTKEY, CONTROL, NOINVERT
+    "G",            IDM_OPTIONS_SHOWGRID,   VIRTKEY, CONTROL, NOINVERT
+    "H",            IDM_OPTIONS_THEME,      VIRTKEY, CONTROL, NOINVERT
+    "H",            IDM_FILE_HIGHSCORE,     VIRTKEY, CONTROL, NOINVERT
+    "K",            IDM_OPTIONS_KEYS,       VIRTKEY, CONTROL, NOINVERT
+    "N",            IDM_FILE_NEW,           VIRTKEY, CONTROL, NOINVERT
+    "P",            IDM_FILE_PAUSE,         VIRTKEY, CONTROL, NOINVERT
+    "Q",            IDM_FILE_EXIT,          VIRTKEY, CONTROL, NOINVERT
+    "T",            IDM_OPTIONS_TILESET,    VIRTKEY, CONTROL, NOINVERT
+    VK_F1,          IDM_OPTIONS_SHOWGRID,   VIRTKEY, NOINVERT
+    VK_F10,         IDM_OPTIONS_SHOWLINES2, VIRTKEY, NOINVERT
+    VK_F11,         IDM_OPTIONS_SHOWNEXTPIECE2, VIRTKEY, NOINVERT
+    VK_F2,          IDM_OPTIONS_SHOWHIGHSCORE1, VIRTKEY, NOINVERT
+    VK_F3,          IDM_OPTIONS_SHOWSCORE1, VIRTKEY, NOINVERT
+    VK_F4,          IDM_OPTIONS_SHOWLEVEL1, VIRTKEY, NOINVERT
+    VK_F5,          IDM_OPTIONS_SHOWLINES1, VIRTKEY, NOINVERT
+    VK_F6,          IDM_OPTIONS_SHOWNEXTPIECE1, VIRTKEY, NOINVERT
+    VK_F7,          IDM_OPTIONS_SHOWHIGHSCORE2, VIRTKEY, NOINVERT
+    VK_F8,          IDM_OPTIONS_SHOWSCORE2, VIRTKEY, NOINVERT
+    VK_F9,          IDM_OPTIONS_SHOWLEVEL2, VIRTKEY, NOINVERT
+END
+
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,6,0
+ PRODUCTVERSION 1,0,6,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "Comments", "Compiled: 7 July 2003\0"
+            VALUE "CompanyName", "Michael Schmitz Technologies\0"
+            VALUE "FileDescription", "Schmitriz\0"
+            VALUE "FileVersion", "1, 0, 6, c\0"
+            VALUE "InternalName", "\0"
+            VALUE "LegalCopyright", "Copyright © 2003 Michael Schmitz\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "SCHMITRIZ.EXE\0"
+            VALUE "PrivateBuild", "\0"
+            VALUE "ProductName", "Schmitriz\0"
+            VALUE "ProductVersion", "1.06c\0"
+            VALUE "SpecialBuild", "\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+#endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// JPEG
+//
+
+IDJ_TITLE               JPEG    DISCARDABLE     "images\\title.jpg"
+IDJ_GAMEOVER            JPEG    DISCARDABLE     "images\\Gameover.jpg"
+IDJ_PAUSED              JPEG    DISCARDABLE     "images\\Paused.jpg"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON                ICON    DISCARDABLE     "images\\icon1.ico"
+IDI_ICON1               ICON    DISCARDABLE     "images\\icon2.ico"
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

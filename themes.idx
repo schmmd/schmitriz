@@ -1,0 +1,81 @@
+;
+; This file stores information for all themes
+; Format:
+;   TITLE: As listen in selection box
+;   LOCATION: Directory items are stored
+;   CREDITS: Credits for the game pic
+;   CREDITS: Credits for the highscore pic
+;   TEXT COLOR: Color for the game text
+;   TEXT COLOR: Color for the highscore text
+;   GRID COLOR: Color for the game grid
+;
+Russian Theme
+themes/rus
+Game picture by Mikhail Popenov of Fedoskino of Sunbirds.com.
+Highscore picture from Nasa.gov.
+075,075,075
+200,200,200
+100,100,100
+Digital Works
+themes/digital
+Game picture aquired from deskmod.com.
+Highscore picture aquired from deskmod.com.
+050,050,050
+200,200,200
+100,100,100
+Clockwork
+themes/clockwork
+Game picture aquired from deskmod.com.
+Highscore picture aquired from deskmod.com.
+050,050,050
+200,200,200
+100,100,100
+Wild Scene
+themes/wild
+Game picture aquired from deskmod.com.
+Highscore picture aquired from deskmod.com.
+200,200,200
+200,200,200
+100,100,100
+Russian Theme B&W
+themes/rusbw
+Game picture by Mikhail Popenov of Fedoskino of Sunbirds.com.
+Highscore picture from Nasa.gov.
+075,075,075
+200,200,200
+150,150,150
+Oman/Brazil Theme
+themes/scene
+Game picture from muscat.hyatt.com.
+Highscore picture from thai-tour.com.
+019,140,255
+100,200,165
+136,108,073
+Kittens Theme
+themes/kitten
+Game picture photographed by Michael Schmitz.
+Highscore picture photographed by Michael Schmitz.
+000,200,150
+200,200,200
+125,150,150
+Black Theme
+themes/black
+No credits for the game picture.
+No credits for the highscore picture.
+150,150,150
+150,150,150
+075,075,075
+Schmitztech Theme
+themes/crew
+Game picture photographed by Michael Schmitz.
+Highscore picture photographed by Michael Schmitz.
+000,000,000
+180,180,180
+075,075,075
+White Theme
+themes/white
+No credits for the game picture.
+No credits for the highscore picture.
+075,075,075
+075,075,075
+125,125,125

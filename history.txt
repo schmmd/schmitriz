@@ -1,0 +1,10 @@
+07/07/2003: 1.05
+	The Schmitztech crew theme was added
+	Masking was corrected (reset to RGB(255, 0, 255))
+	Circular tilesets added
+	Next Piece corrected (previously not functional)
+	Instructions and Schmitztech link added
+	? and ! shortcuts for Instructions and Schmitztech link
+	Theme colors adjusted for easier sight
+1.06
+	Instructions modified ([Level Number] to [Level] and [Height Dropped] to [Height])

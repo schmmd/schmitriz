@@ -1,0 +1,17 @@
+The Tetris scoring is based on the scoring for the Macintosh version,
+which I derived (hopefully accurately) by observing the Mac closely.
+
+  score per piece = 5 + (2 * level) + height of piece
+
+where height of piece is defined as
+
+  a.) the height of the piece when you dropped it
+  b.) the height of the piece when it landed if you didn't drop it
+
+If the next piece feature is on, subtract
+
+  level/2 + 2
+
+from that score. There are no additional points for eliminating rows.
+
+
