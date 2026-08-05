@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Schmitriz</title>
+<style>
+  :root { --ink:#00c8a5; --accent:#ff2a2e; --dim:#0a0a0c; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; }
+  body {
+    background:#050506; color:#d8d8d8;
+    font-family: "Lucida Console", Consolas, Menlo, monospace;
+    display:flex; flex-direction:column; align-items:center; min-height:100%;
+    -webkit-font-smoothing:none;
+  }
+  h1.wordmark { font-size:22px; letter-spacing:6px; margin:14px 0 4px; color:var(--ink); text-shadow:0 0 8px rgba(0,200,165,.4); }
+  .tag { font-size:11px; color:#666; margin-bottom:10px; letter-spacing:1px; }
+
+  .menubar { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin-bottom:10px; }
+  .menubar button, .opts select, .opts label { font-family:inherit; }
+  .menubar button {
+    background:#141416; color:var(--accent); border:1px solid #2a2a2e; padding:6px 12px;
+    cursor:pointer; font-size:12px; letter-spacing:1px; border-radius:3px;
+  }
+  .menubar button:hover:not(:disabled) { color:#ff6b6e; border-color:#444; }
+  .menubar button:disabled { color:#3a3a3a; cursor:default; }
+
+  .opts { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; align-items:center; margin-bottom:14px; font-size:11px; color:#888; }
+  .opts select { background:#141416; color:#cfcfcf; border:1px solid #2a2a2e; padding:3px 4px; border-radius:3px; }
+  .opts label { display:flex; align-items:center; gap:4px; cursor:pointer; }
+
+  .stage { display:flex; gap:18px; align-items:flex-start; justify-content:center; }
+
+  .panel { min-width:120px; }
+  .stat { margin-bottom:12px; }
+  .stat .k { font-size:10px; color:#777; letter-spacing:2px; }
+  .stat .v { font-size:18px; color:var(--statink,var(--ink)); }
+  .preview { margin-top:6px; }
+  .preview canvas { image-rendering: pixelated; background:rgba(0,0,0,.35); border:1px solid #222; }
+
+  .boardwrap { position:relative; }
+  #board { display:block; image-rendering:pixelated; background:#111; border:1px solid #222;
+           height:min(80vh, 620px); width:auto; }
+
+  /* overlay screens */
+  .screen {
+    position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:16px;
+    background: linear-gradient(rgba(4,4,6,.80), rgba(4,4,6,.80)), var(--highbg, none);
+    background-size: cover; background-position: center;
+  }
+  .screen.on { display:flex; }
+  .screen h2 { color:var(--ink); letter-spacing:3px; margin:0 0 14px; font-size:16px; }
+  .row { margin:8px 0; }
+  .row .lbl { font-size:11px; color:#8a8a8a; letter-spacing:2px; display:block; margin-bottom:6px; }
+  .choices { display:flex; gap:5px; flex-wrap:wrap; justify-content:center; }
+  .choices button {
+    font-family:inherit; background:#141416; color:#0a9; border:1px solid #263; padding:5px 9px;
+    cursor:pointer; border-radius:3px; font-size:12px; min-width:26px;
+  }
+  .choices button.sel { background:#0a9; color:#041; border-color:#0fc; }
+  .bigbtn {
+    margin-top:14px; font-family:inherit; background:#141416; color:var(--accent);
+    border:1px solid #532; padding:8px 20px; cursor:pointer; border-radius:3px; letter-spacing:2px; font-size:13px;
+  }
+  .bigbtn:hover { color:#ff6b6e; }
+  #titleImg { max-width:88%; max-height:60%; border:1px solid #222; margin-bottom:12px; }
+
+  table.hs { border-collapse:collapse; font-size:12px; color:#0c9; margin:4px auto; }
+  table.hs td { padding:2px 10px; }
+  table.hs td.sc { text-align:right; color:#0fc; }
+  table.hs input { font-family:inherit; background:#021; color:#0ff; border:1px solid #0a7; width:130px; }
+
+  .legend { font-size:10px; color:#666; margin-top:14px; line-height:1.6; text-align:center; max-width:520px; }
+  .legend b { color:#999; }
+</style>
+</head>
+<body>
+  <h1 class="wordmark">SCHMITRIZ</h1>
+  <div class="tag">the two-way tetris &mdash; web port</div>
+
+  <div class="menubar">
+    <button id="mNew">New Game</button>
+    <button id="mPause" disabled>Pause</button>
+    <button id="mEnd" disabled>End</button>
+    <button id="mHigh">High Scores</button>
+  </div>
+
+  <div class="opts">
+    <label>Tiles <select id="selTiles"></select></label>
+    <label>Theme <select id="selTheme"></select></label>
+    <label><input type="checkbox" id="cbGrid"> Grid</label>
+    <label><input type="checkbox" id="cbNext"> Next piece</label>
+  </div>
+
+  <div class="stage">
+    <div class="panel" id="panelL"></div>
+
+    <div class="boardwrap">
+      <canvas id="board" width="600" height="1200"></canvas>
+
+      <!-- Title screen -->
+      <div class="screen" id="scrTitle">
+        <img id="titleImg" alt="Schmitriz">
+        <button class="bigbtn" id="titleStart">Play</button>
+      </div>
+
+      <!-- New game screen -->
+      <div class="screen" id="scrNew">
+        <h2>NEW GAME</h2>
+        <div class="row"><span class="lbl">Players</span><div class="choices" id="chPlayers"></div></div>
+        <div class="row"><span class="lbl">Starting Level</span><div class="choices" id="chLevel"></div></div>
+        <div class="row"><span class="lbl">Starting Height</span><div class="choices" id="chHeight"></div></div>
+        <button class="bigbtn" id="startGame">Start Game</button>
+      </div>
+
+      <!-- Highscore screen -->
+      <div class="screen" id="scrHigh">
+        <h2>HIGH SCORES</h2>
+        <div id="hsMsg" style="font-size:11px;color:#0ff;margin-bottom:6px;display:none;">Enter your name:</div>
+        <table class="hs" id="hsTable"></table>
+        <button class="bigbtn" id="hsNew">New Game</button>
+      </div>
+    </div>
+
+    <div class="panel" id="panelR"></div>
+  </div>
+
+  <div class="legend" id="legend"></div>
+
+  <script src="assets.js"></script>
+  <script src="schmitriz.js"></script>
+  <script>
+  (function(){
+    // ---- config / assets ------------------------------------------------
+    const S = 3; // canvas supersample
+    const canvas = document.getElementById('board');
+    const ctx = canvas.getContext('2d');
+
+    const ui = { tileset:0, theme:0, grid:false, next:false };
+    const tilesetImg = new Image();
+    const themeImg = new Image();
+    tilesetImg.src = ASSETS.tilesets[0].src;
+    themeImg.src = ASSETS.themes[0].src;
+    let statInk = ASSETS.themes[0].text;
+
+    const selTiles = document.getElementById('selTiles');
+    const selTheme = document.getElementById('selTheme');
+    ASSETS.tilesets.forEach((t,i)=> selTiles.add(new Option(t.name,i)));
+    ASSETS.themes.forEach((t,i)=> selTheme.add(new Option(t.name,i)));
+    selTiles.onchange = ()=>{ ui.tileset=+selTiles.value; tilesetImg.src=ASSETS.tilesets[ui.tileset].src; renderPreviews(); };
+    selTheme.onchange = ()=>{ ui.theme=+selTheme.value; themeImg.src=ASSETS.themes[ui.theme].src; statInk=ASSETS.themes[ui.theme].text; applyInk(); applyHighBg(); };
+    document.getElementById('cbGrid').onchange = e=> ui.grid=e.target.checked;
+    document.getElementById('cbNext').onchange = e=>{ ui.next=e.target.checked; if(game) game.showNext=ui.next; buildPanels(); };
+    document.getElementById('titleImg').src = ASSETS.title;
+
+    function applyInk(){ document.documentElement.style.setProperty('--statink', statInk); }
+    // The New Game / High Score screens use the theme's "high" background art
+    // (the original _high.jpg that DirectDraw drew as lpddsHighBack).
+    function applyHighBg(){
+      const hi = ASSETS.themes[ui.theme].high;
+      document.documentElement.style.setProperty('--highbg', hi ? `url("${hi}")` : 'none');
+    }
+    applyInk(); applyHighBg();
+
+    // ---- keymaps --------------------------------------------------------
+    function keymaps(numPlayers){
+      const p1drop = numPlayers===2 ? ['Digit0','Numpad0'] : ['Digit0','Numpad0','Space'];
+      const p1 = {
+        rotate:['Digit5','Numpad5','ArrowUp'], revrotate:['Digit8','Numpad8'],
+        left:['Digit4','Numpad4','ArrowLeft'], right:['Digit6','Numpad6','ArrowRight'],
+        drop:p1drop, fast:['NumpadAdd','ArrowDown']
+      };
+      const p2 = {
+        rotate:['KeyK'], revrotate:['KeyI'], left:['KeyJ'], right:['KeyL'],
+        drop:['Space'], fast:['KeyA']
+      };
+      return numPlayers===2 ? [p1,p2] : [p1];
+    }
+
+    // ---- input ----------------------------------------------------------
+    const held = new Set();
+    const swallow = new Set(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space']);
+    addEventListener('keydown', e=>{
+      if(swallow.has(e.code)) e.preventDefault();
+      if(e.repeat) return;
+      held.add(e.code);
+      if((e.code==='KeyP'||e.code==='Escape') && state==='game') togglePause();
+      if(state==='gameover' && (e.code==='Enter'||e.code==='Space')) proceedFromGameOver();
+    });
+    addEventListener('keyup', e=> held.delete(e.code));
+    addEventListener('blur', ()=>{ held.clear(); if(state==='game' && !game.paused) togglePause(); });
+
+    canvas.addEventListener('mouseup', ()=>{ if(state==='gameover') proceedFromGameOver(); });
+
+    // ---- high scores (localStorage top-10) ------------------------------
+    const HS_KEY='schmitriz.highscores';
+    function loadScores(){
+      try{ const s=JSON.parse(localStorage.getItem(HS_KEY)); if(Array.isArray(s)&&s.length===10) return s; }catch(e){}
+      return Array.from({length:10},()=>({name:'None',score:0}));
+    }
+    function saveScores(s){ localStorage.setItem(HS_KEY, JSON.stringify(s)); }
+    let scores = loadScores();
+    function topScore(){ return scores[0].score; }
+    function scoreFits(v){ return v > scores[9].score; }
+
+    // ---- panels (stats) -------------------------------------------------
+    const panelL = document.getElementById('panelL');
+    const panelR = document.getElementById('panelR');
+    function statBlock(idx){
+      return `<div class="panel">
+        <div class="stat"><div class="k">HIGH</div><div class="v" id="v_high_${idx}">0</div></div>
+        <div class="stat"><div class="k">SCORE</div><div class="v" id="v_score_${idx}">0</div></div>
+        <div class="stat"><div class="k">LEVEL</div><div class="v" id="v_level_${idx}">0</div></div>
+        <div class="stat"><div class="k">LINES</div><div class="v" id="v_lines_${idx}">0</div></div>
+        ${ui.next?`<div class="stat"><div class="k">NEXT</div><div class="preview"><canvas id="prev_${idx}" width="120" height="90"></canvas></div></div>`:''}
+      </div>`;
+    }
+    function buildPanels(){
+      if(!game){ panelL.innerHTML=''; panelR.innerHTML=''; return; }
+      if(game.numPlayers===1){ panelL.innerHTML=''; panelR.innerHTML=statBlock(0); }
+      else { panelL.innerHTML=statBlock(0); panelR.innerHTML=statBlock(1); }
+      updateStats(); renderPreviews();
+    }
+    function setV(id,val){ const el=document.getElementById(id); if(el) el.textContent=val; }
+    function updateStats(){
+      if(!game) return;
+      for(let i=0;i<game.numPlayers;i++){
+        setV(`v_high_${i}`, topScore());
+        setV(`v_score_${i}`, game.controllers[i].lCurScore);
+        setV(`v_level_${i}`, game.level);
+        setV(`v_lines_${i}`, game.controllers[i].lCurLines);
+      }
+    }
+
+    // ---- rendering ------------------------------------------------------
+    function drawTile(c, px, py, w, h){
+      if(!tilesetImg.complete || !tilesetImg.naturalWidth) return;
+      ctx.drawImage(tilesetImg, c*20,0,20,20, px,py,w,h);
+    }
+    function renderPreviews(){
+      if(!game||!ui.next || !tilesetImg.complete || !tilesetImg.naturalWidth) return;
+      for(let i=0;i<game.numPlayers;i++){
+        const cv=document.getElementById('prev_'+i); if(!cv) continue;
+        const pc=cv.getContext('2d'); pc.imageSmoothingEnabled=false; pc.clearRect(0,0,cv.width,cv.height);
+        const n=game.controllers[i].next, m=SHAPES[n.type][n.rot], met=METRICS[n.type][n.rot], sz=24;
+        const ox=(cv.width - met.width*sz)/2 - met.left*sz;
+        const oy=(cv.height - met.height*sz)/2 - met.top*sz;
+        for(let r=0;r<4;r++)for(let c2=0;c2<4;c2++) if(m[r][c2]) pc.drawImage(tilesetImg,n.type*20,0,20,20, ox+c2*sz, oy+r*sz, sz, sz);
+      }
+    }
+
+    function render(now){
+      requestAnimationFrame(render);
+      if(state==='game') { game.run(now, held); updateStats(); if(ui.next) renderPreviews(); }
+
+      ctx.setTransform(S,0,0,S,0,0);
+      ctx.clearRect(0,0,200,400);
+      ctx.imageSmoothingEnabled=true;
+      if(themeImg.complete && themeImg.naturalWidth) ctx.drawImage(themeImg,0,0,200,400);
+      else { ctx.fillStyle='#111'; ctx.fillRect(0,0,200,400); }
+
+      if(game && (state==='game'||state==='gameover')){
+        const b=game.board;
+        ctx.imageSmoothingEnabled=false;
+        for(let y=0;y<b.nTileY;y++)for(let x=0;x<b.nTileX;x++){
+          const t=b.get(x,y); if(t!==EMPTY) drawTile(t, b.nX+x*b.nTileW, y*b.nTileH, b.nTileW, b.nTileH);
+        }
+        for(const c of game.controllers){
+          if(c.type<0) continue;
+          const m=SHAPES[c.type][c.rot];
+          for(let r=0;r<4;r++)for(let c2=0;c2<4;c2++){
+            if(!m[r][c2]) continue;
+            const by=c.y+r, bx=c.x+c2;
+            if(by>=0&&by<b.nTileY) drawTile(c.type, b.nX+bx*b.nTileW, by*b.nTileH, b.nTileW, b.nTileH);
+          }
+        }
+        // 2p centre line
+        if(game.numPlayers===2){
+          const yTop=game.controllers[0].lBoundryY*b.nTileH;
+          ctx.fillStyle='rgb(25,25,25)'; ctx.fillRect(b.nX, yTop-1, b.nTileX*b.nTileW, 2);
+        }
+        // grid / borders
+        ctx.fillStyle='rgb(150,150,150)';
+        if(ui.grid){
+          for(let x=0;x<=b.nTileX;x++) ctx.fillRect(b.nX+x*b.nTileW, 0, 1, b.nTileY*b.nTileH);
+          for(let y=0;y<=b.nTileY;y++) ctx.fillRect(b.nX, y*b.nTileH, b.nTileX*b.nTileW, 1);
+        } else {
+          ctx.fillRect(b.nX, 0, 1, b.nTileY*b.nTileH);
+          ctx.fillRect(b.nX+b.nTileX*b.nTileW, 0, 1, b.nTileY*b.nTileH);
+        }
+        // overlays
+        if(game.paused) banner('PAUSED');
+        if(state==='gameover'){
+          if(game.numPlayers===2) banner(game.loser===0?'PLAYER 2 WINS':'PLAYER 1 WINS');
+          else banner('GAME OVER');
+        }
+      }
+    }
+    function banner(text){
+      ctx.setTransform(S,0,0,S,0,0);
+      ctx.fillStyle='rgba(0,0,0,.72)'; ctx.fillRect(0,182,200,40);
+      ctx.fillStyle='#ff2a2e'; ctx.font='bold 20px "Lucida Console",monospace';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(text,100,202);
+      ctx.textAlign='left';
+    }
+
+    // ---- screen / state management --------------------------------------
+    let game=null;
+    let state='title'; // title | new | game | gameover | high
+    const screens={ title:document.getElementById('scrTitle'), new:document.getElementById('scrNew'),
+                    high:document.getElementById('scrHigh') };
+    function showScreen(name){
+      for(const k in screens) screens[k].classList.toggle('on', k===name);
+    }
+    function setMenu(){
+      document.getElementById('mPause').disabled = !(state==='game');
+      document.getElementById('mEnd').disabled   = !(state==='game');
+      document.getElementById('mHigh').disabled  = (state==='game');
+    }
+
+    // New-game choice widgets
+    let choice={players:1, level:0, height:0};
+    function buildChoices(){
+      mk('chPlayers',[1,2],v=>v, v=>choice.players=v, choice.players);
+      mk('chLevel',[0,1,2,3,4,5,6,7,8,9],v=>v, v=>choice.level=v, choice.level);
+      mk('chHeight',[0,4,7,10,13], v=>String(v).padStart(2,'0'), v=>choice.height=v, choice.height);
+    }
+    function mk(id, vals, label, onpick, cur){
+      const box=document.getElementById(id); box.innerHTML='';
+      vals.forEach(v=>{
+        const btn=document.createElement('button'); btn.textContent=label(v);
+        if(v===cur) btn.classList.add('sel');
+        btn.onclick=()=>{ onpick(v); [...box.children].forEach(c=>c.classList.remove('sel')); btn.classList.add('sel'); };
+        box.appendChild(btn);
+      });
+    }
+
+    function toTitle(){ state='title'; game=null; buildPanels(); showScreen('title'); setMenu(); }
+    function toNewGame(){ state='new'; buildChoices(); showScreen('new'); setMenu(); }
+
+    function startGame(){
+      const cfg = choice.players===1
+        ? {numPlayers:1, tileX:10, tileY:20, W:20, H:20, linesPerLevel:20}
+        : {numPlayers:2, tileX:10, tileY:40, W:10, H:10, linesPerLevel:5};
+      game = new Game(cfg);
+      game.showNext = ui.next;
+      game.applyKeys(keymaps(cfg.numPlayers));
+      game.onScore = updateStats;
+      game.onEnd = ()=>{ state='gameover'; setMenu(); };
+      game.new_(choice.level, choice.height, performance.now());
+      state='game'; showScreen(null); buildPanels(); setMenu();
+    }
+
+    function togglePause(){
+      if(state!=='game') return;
+      game.paused=!game.paused;
+      if(!game.paused){ const now=performance.now(); for(const c of game.controllers) c.gravity.reset(now); }
+    }
+
+    function proceedFromGameOver(){
+      if(state!=='gameover') return;
+      if(game.numPlayers===1){
+        const sc=game.controllers[0].lCurScore;
+        openHighscores(sc);
+      } else {
+        toNewGame();
+      }
+    }
+
+    // Highscore screen
+    function openHighscores(newScore){
+      state='high'; setMenu();
+      const table=document.getElementById('hsTable');
+      const msg=document.getElementById('hsMsg');
+      let insertPos=-1;
+      if(newScore!=null && scoreFits(newScore)){
+        // find insertion position (highest slot whose score < newScore)
+        insertPos=9; while(insertPos>0 && scores[insertPos-1].score < newScore) insertPos--;
+        scores.splice(9,1); scores.splice(insertPos,0,{name:'', score:newScore});
+      }
+      function paint(){
+        table.innerHTML='';
+        scores.forEach((s,i)=>{
+          const tr=document.createElement('tr');
+          const isNew = (i===insertPos && s.name==='');
+          tr.innerHTML = `<td>${i+1}.</td><td class="nm"></td><td class="sc">${s.score}</td>`;
+          const nm=tr.querySelector('.nm');
+          if(isNew){
+            const inp=document.createElement('input'); inp.maxLength=14; inp.placeholder='your name';
+            inp.onkeydown=e=>{ if(e.key==='Enter'){ engrave(inp.value.trim()||'Player'); } e.stopPropagation(); };
+            nm.appendChild(inp); setTimeout(()=>inp.focus(),0);
+          } else nm.textContent=s.name||'None';
+          table.appendChild(tr);
+        });
+      }
+      function engrave(name){ scores[insertPos].name=name; insertPos=-1; saveScores(scores); msg.style.display='none'; paint(); updateStats(); }
+      msg.style.display = insertPos>=0 ? 'block' : 'none';
+      paint();
+      showScreen('high'); buildPanels();
+    }
+
+    // ---- menu wiring ----------------------------------------------------
+    document.getElementById('mNew').onclick = toNewGame;
+    document.getElementById('mPause').onclick = togglePause;
+    document.getElementById('mEnd').onclick = ()=>{ if(state==='game') game.end(0); };
+    document.getElementById('mHigh').onclick = ()=>{ if(state!=='game') openHighscores(null); };
+    document.getElementById('titleStart').onclick = toNewGame;
+    document.getElementById('startGame').onclick = startGame;
+    document.getElementById('hsNew').onclick = toNewGame;
+
+    // ---- controls legend ------------------------------------------------
+    document.getElementById('legend').innerHTML =
+      '<b>Player 1</b> &nbsp; move: 4/6 or &larr;/&rarr; &nbsp; rotate: 5 or &uarr; &nbsp; rev-rotate: 8 &nbsp; soft drop: + or &darr; &nbsp; hard drop: 0'+
+      '<br><b>Player 2</b> &nbsp; move: J/L &nbsp; rotate: K &nbsp; rev-rotate: I &nbsp; soft drop: A &nbsp; hard drop: Space'+
+      '<br><span style="color:#555">P or Esc pauses &middot; in 2-player, clear lines at the centre to crush your opponent</span>';
+
+    // ---- go -------------------------------------------------------------
+    buildPanels(); showScreen('title'); setMenu();
+    requestAnimationFrame(render);
+  })();
+  </script>
+</body>
+</html>
