@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Schmitriz</title>
 <style>
   :root { --ink:#00c8a5; --accent:#ff2a2e; --dim:#0a0a0c; }
@@ -41,7 +44,7 @@
 
   .boardwrap { position:relative; }
   #board { display:block; image-rendering:pixelated; background:#111; border:1px solid #222;
-           height:min(80vh, 620px); width:auto; }
+           height:min(80vh, 620px); width:auto; touch-action:none; }
 
   /* overlay screens */
   .screen {
@@ -74,6 +77,37 @@
 
   .legend { font-size:10px; color:#666; margin-top:14px; line-height:1.6; text-align:center; max-width:520px; }
   .legend b { color:#999; }
+
+  /* ---- mobile / touch ------------------------------------------------- */
+  html, body { overscroll-behavior:none; }               /* no pull-to-refresh / bounce */
+  .touchhint { display:none; }                            /* shown only on small screens */
+
+  @media (max-width:600px), (pointer:coarse) {
+    body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+    h1.wordmark { font-size:18px; letter-spacing:4px; margin:6px 0 2px; }
+    .tag { display:none; }
+    .menubar { gap:5px; margin-bottom:8px; }
+    .menubar button { padding:8px 12px; font-size:12px; }  /* larger tap targets */
+    .opts { gap:10px; margin-bottom:8px; }
+
+    /* stack the board and stats vertically; the board fills the width it can */
+    .stage { flex-direction:column; gap:8px; width:100%; }
+    #board { height:min(64dvh, 78vw*2); width:auto; max-width:96vw; }
+    /* stats become a single compact horizontal strip under the board */
+    .panel { min-width:0; width:100%; }
+    .panel .panel { display:flex; flex-wrap:wrap; justify-content:center; gap:12px; }
+    .panel .stat { margin:0; text-align:center; }
+    .panel .stat .v { font-size:16px; }
+    .preview { display:none; }                             /* NEXT preview: keep the strip tight */
+
+    /* bigger tap targets on the overlay screens */
+    .choices button { padding:9px 12px; min-width:34px; font-size:13px; }
+    .bigbtn { padding:11px 22px; }
+
+    .legend { display:none; }                              /* hide the keyboard legend */
+    .touchhint { display:block; font-size:11px; color:#777; margin-top:10px; line-height:1.7; text-align:center; }
+    .touchhint b { color:#0a9; }
+  }
 </style>
 </head>
 <body>
@@ -128,6 +162,10 @@
   </div>
 
   <div class="legend" id="legend"></div>
+  <div class="touchhint">
+    Tap <b>left</b> / <b>right</b> to move &middot; tap <b>centre</b> to rotate<br>
+    <b>hold centre</b> to soft-drop &middot; <b>swipe down</b> to hard-drop
+  </div>
 
   <script src="assets.js"></script>
   <script src="schmitriz.js"></script>
@@ -193,6 +231,68 @@
     addEventListener('blur', ()=>{ held.clear(); if(state==='game' && !game.paused) togglePause(); });
 
     canvas.addEventListener('mouseup', ()=>{ if(state==='gameover') proceedFromGameOver(); });
+
+    // ---- touch input (mobile) ------------------------------------------
+    // The board itself is the gamepad. Every gesture is fed through the same
+    // `held` Set the keyboard uses, so the Key state machine in schmitriz.js is
+    // reused unchanged. Zones (by where the touch starts):
+    //   left third  -> move left      centre tap  -> rotate      right third -> move right
+    //   hold centre -> soft drop      swipe down  -> hard drop
+    // A tap fires on release as a single "pulse": the code is added now and
+    // removed a couple of frames later, so the Key registers exactly one press.
+    function pulse(code){
+      held.add(code);
+      requestAnimationFrame(()=> requestAnimationFrame(()=> held.delete(code)));
+    }
+    const SOFT = 'ArrowDown';               // P1 soft-drop (KeyFast) code
+    const HOLD_MS = 180;                    // centre press longer than this = soft drop
+    const touch = { active:false, x0:0, y0:0, t0:0, zone:null, done:false, soft:false, holdT:0 };
+    function inPlay(){ return state==='game' && game && !game.paused; }
+    function zoneAt(clientX){
+      const rect=canvas.getBoundingClientRect();
+      const fx=(clientX-rect.left)/rect.width;
+      return fx<0.36 ? 'left' : fx>0.64 ? 'right' : 'centre';
+    }
+    function endSoft(){ if(touch.soft){ held.delete(SOFT); touch.soft=false; } }
+    canvas.addEventListener('touchstart', e=>{
+      if(!inPlay()) return;                 // let overlays / game-over get native taps
+      const t=e.changedTouches[0];
+      touch.active=true; touch.done=false; touch.soft=false;
+      touch.x0=t.clientX; touch.y0=t.clientY; touch.t0=e.timeStamp; touch.zone=zoneAt(t.clientX);
+      // Holding (still) in the centre zone engages soft drop until release.
+      clearTimeout(touch.holdT);
+      if(touch.zone==='centre'){
+        touch.holdT=setTimeout(()=>{ if(touch.active && !touch.done){ touch.soft=true; held.add(SOFT); } }, HOLD_MS);
+      }
+      e.preventDefault();
+    }, {passive:false});
+    canvas.addEventListener('touchmove', e=>{
+      if(!touch.active || touch.done) return;
+      const t=e.changedTouches[0], dy=t.clientY-touch.y0, dx=t.clientX-touch.x0;
+      const rect=canvas.getBoundingClientRect();
+      if(!touch.soft && dy > Math.max(40, rect.height*0.10) && dy > Math.abs(dx)){
+        clearTimeout(touch.holdT);
+        pulse('Space');                     // downward swipe -> hard drop (P1 drop code)
+        touch.done=true;
+      } else if(!touch.soft && Math.hypot(dx,dy) > 16){
+        clearTimeout(touch.holdT);          // moved too far to be a hold -> no soft drop
+      }
+      e.preventDefault();
+    }, {passive:false});
+    canvas.addEventListener('touchend', e=>{
+      if(!touch.active) return;
+      touch.active=false; clearTimeout(touch.holdT); e.preventDefault();
+      if(touch.soft){ endSoft(); return; }  // was soft-dropping -> just stop
+      if(touch.done) return;                // already handled as a swipe
+      const t=e.changedTouches[0];
+      const dx=t.clientX-touch.x0, dy=t.clientY-touch.y0;
+      if(Math.hypot(dx,dy) < 24 && (e.timeStamp-touch.t0) < 350){   // a tap
+        if(touch.zone==='left') pulse('ArrowLeft');
+        else if(touch.zone==='right') pulse('ArrowRight');
+        else pulse('ArrowUp');              // centre tap -> rotate
+      }
+    }, {passive:false});
+    canvas.addEventListener('touchcancel', ()=>{ clearTimeout(touch.holdT); endSoft(); touch.active=false; }, {passive:false});
 
     // ---- high scores (global top-10 via Supabase) -----------------------
     // Paste your project's values below. The anon key is meant to be public —
