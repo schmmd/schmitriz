@@ -225,10 +225,20 @@
     function topScore(){ return scores[0].score; }
     function scoreFits(v){ return v > scores[scores.length-1].score; }
 
+    // Supabase must never hang the UI — a stalled connection (slow network,
+    // rate-limit, outage) would otherwise leave the high-score screen stuck on
+    // "loading…" and block name entry. Cap every request with an AbortController
+    // timeout; on abort the fetch rejects and we fall back to local scores.
+    async function sbFetch(url, opts={}, ms=5000){
+      const ac = new AbortController();
+      const t = setTimeout(()=>ac.abort(), ms);
+      try{ return await fetch(url, { ...opts, signal: ac.signal }); }
+      finally{ clearTimeout(t); }
+    }
     async function refreshScores(){
       if(SB_ON){
         try{
-          const r = await fetch(`${SB_URL}/rest/v1/highscores?select=name,score&order=score.desc&limit=10`, { headers: SB_HEAD });
+          const r = await sbFetch(`${SB_URL}/rest/v1/highscores?select=name,score&order=score.desc&limit=10`, { headers: SB_HEAD });
           if(r.ok){ scores = pad10(await r.json()); updateStats(); return; }
         }catch(e){ /* fall through to local */ }
       }
@@ -237,7 +247,7 @@
     async function submitScore(name, score){
       if(SB_ON){
         try{
-          const r = await fetch(`${SB_URL}/rest/v1/highscores`, {
+          const r = await sbFetch(`${SB_URL}/rest/v1/highscores`, {
             method:'POST', headers:{ ...SB_HEAD, 'Content-Type':'application/json' },
             body: JSON.stringify({ name, score })
           });
@@ -419,15 +429,12 @@
       const table=document.getElementById('hsTable');
       const msg=document.getElementById('hsMsg');
       showScreen('high'); buildPanels();
-      msg.style.display='none';
-      table.innerHTML='<tr><td colspan="3" style="color:#0a8">loading…</td></tr>';
 
-      await refreshScores(); // pull the latest global top-10
-
-      let entering = (newScore!=null && scoreFits(newScore));
-      let insertPos = -1;
-      if(entering){ insertPos = scores.length-1; while(insertPos>0 && scores[insertPos-1].score < newScore) insertPos--; }
-
+      let entering=false, insertPos=-1, submitted=false, dirty=false;
+      function recompute(){
+        entering = (newScore!=null && !submitted && scoreFits(newScore));
+        if(entering){ insertPos = scores.length-1; while(insertPos>0 && scores[insertPos-1].score < newScore) insertPos--; }
+      }
       function paint(){
         table.innerHTML='';
         const rows = scores.slice();
@@ -438,12 +445,13 @@
           const nm=tr.querySelector('.nm');
           if(s._new){
             const inp=document.createElement('input'); inp.maxLength=14; inp.placeholder='your name';
+            inp.oninput=()=>{ dirty = inp.value.length>0; };
             inp.onkeydown=async e=>{
               e.stopPropagation();
               if(e.key==='Enter'){
                 e.preventDefault();
                 const who = inp.value.trim().slice(0,14) || 'Player';
-                entering=false; msg.style.display='none';
+                entering=false; submitted=true; msg.style.display='none';
                 table.innerHTML='<tr><td colspan="3" style="color:#0a8">saving…</td></tr>';
                 await submitScore(who, newScore);
                 paint();
@@ -453,9 +461,17 @@
           } else nm.textContent=s.name||'None';
           table.appendChild(tr);
         });
+        msg.style.display = entering ? 'block' : 'none';
       }
-      msg.style.display = entering ? 'block' : 'none';
-      paint();
+
+      // Render immediately from the in-memory board so the name field is usable
+      // at once — the network must never gate name entry (see sbFetch).
+      recompute(); paint();
+
+      // Then refresh the global top-10 in the background. Only re-paint if the
+      // player hasn't started typing, so we never clobber a name in progress.
+      await refreshScores();
+      if(!submitted && !dirty){ recompute(); paint(); }
     }
 
     // ---- menu wiring ----------------------------------------------------
