@@ -31,7 +31,34 @@ there are no external requests.
 `P` or `Esc` pauses. In 2-player, clear lines at the centre line to push it into
 your opponent's territory and crush them.
 
-High scores are kept in the browser's `localStorage`.
+High scores are a **global leaderboard** stored in Supabase (a hosted Postgres
+Data API). If the backend is unreachable — or the keys below are left as
+placeholders — the game falls back to this browser's `localStorage`, so it
+always keeps scores somewhere.
+
+### Leaderboard backend (Supabase)
+
+The page reads/writes the top 10 via Supabase REST using a **publishable** key
+(safe to be public — it's gated by row-level security). Set your Project URL and
+key in the two `SB_URL` / `SB_KEY` constants near the top of the script in
+`docs/index.html`. The table and its policies:
+
+```sql
+create table public.highscores (
+  id         bigint generated always as identity primary key,
+  name       text    not null check (char_length(name) <= 14),
+  score      integer not null check (score >= 0),
+  created_at timestamptz not null default now()
+);
+alter table public.highscores enable row level security;
+create policy "public read"   on public.highscores for select using (true);
+create policy "public insert" on public.highscores for insert
+  with check (score >= 0 and char_length(name) <= 14);
+grant select, insert on public.highscores to anon;   -- table privilege for the anon role
+```
+
+Only `select` + `insert` are granted, and no update/delete policy exists, so the
+public key can add and read scores but can't edit or wipe the board.
 
 ## Files
 

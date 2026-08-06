@@ -194,16 +194,59 @@
 
     canvas.addEventListener('mouseup', ()=>{ if(state==='gameover') proceedFromGameOver(); });
 
-    // ---- high scores (localStorage top-10) ------------------------------
-    const HS_KEY='schmitriz.highscores';
-    function loadScores(){
-      try{ const s=JSON.parse(localStorage.getItem(HS_KEY)); if(Array.isArray(s)&&s.length===10) return s; }catch(e){}
-      return Array.from({length:10},()=>({name:'None',score:0}));
+    // ---- high scores (global top-10 via Supabase) -----------------------
+    // Paste your project's values below. The anon key is meant to be public —
+    // the table's row-level-security policies allow only SELECT + INSERT, so
+    // scores can be read and added but not edited or deleted. If these are left
+    // as placeholders (or a request fails), we fall back to this browser's
+    // localStorage so the game still keeps scores locally.
+    const SB_URL = 'https://fjrakhztqbopkmlpsabd.supabase.co';   // <-- Project URL
+    const SB_KEY = 'sb_publishable_BDHlTFCIarRtimwhQqY-QA_lOnIjAC7';   // publishable key (safe to be public)
+    const SB_ON  = !/YOUR-PROJECT|YOUR-(ANON|PUBLISHABLE)/.test(SB_URL + SB_KEY);
+    // Legacy anon keys are JWTs (need Authorization: Bearer); new publishable
+    // keys aren't, so they go in the apikey header only.
+    const SB_HEAD = SB_KEY.startsWith('eyJ')
+      ? { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY }
+      : { apikey: SB_KEY };
+    const HS_KEY = 'schmitriz.highscores';
+
+    function pad10(list){
+      const out = list.slice(0,10).map(s=>({name:s.name||'None', score:s.score|0}));
+      while(out.length<10) out.push({name:'None', score:0});
+      return out;
     }
-    function saveScores(s){ localStorage.setItem(HS_KEY, JSON.stringify(s)); }
-    let scores = loadScores();
+    function localLoad(){
+      try{ const s=JSON.parse(localStorage.getItem(HS_KEY)); if(Array.isArray(s)) return pad10(s); }catch(e){}
+      return pad10([]);
+    }
+    function localSave(list){ localStorage.setItem(HS_KEY, JSON.stringify(list)); }
+
+    let scores = localLoad();                       // in-memory top-10, always padded
     function topScore(){ return scores[0].score; }
-    function scoreFits(v){ return v > scores[9].score; }
+    function scoreFits(v){ return v > scores[scores.length-1].score; }
+
+    async function refreshScores(){
+      if(SB_ON){
+        try{
+          const r = await fetch(`${SB_URL}/rest/v1/highscores?select=name,score&order=score.desc&limit=10`, { headers: SB_HEAD });
+          if(r.ok){ scores = pad10(await r.json()); updateStats(); return; }
+        }catch(e){ /* fall through to local */ }
+      }
+      scores = localLoad(); updateStats();
+    }
+    async function submitScore(name, score){
+      if(SB_ON){
+        try{
+          const r = await fetch(`${SB_URL}/rest/v1/highscores`, {
+            method:'POST', headers:{ ...SB_HEAD, 'Content-Type':'application/json' },
+            body: JSON.stringify({ name, score })
+          });
+          if(r.ok){ await refreshScores(); return; }
+        }catch(e){ /* fall through to local */ }
+      }
+      const list = localLoad(); list.push({name, score}); list.sort((a,b)=>b.score-a.score);
+      scores = pad10(list); localSave(scores); updateStats();
+    }
 
     // ---- panels (stats) -------------------------------------------------
     const panelL = document.getElementById('panelL');
@@ -371,35 +414,48 @@
     }
 
     // Highscore screen
-    function openHighscores(newScore){
+    async function openHighscores(newScore){
       state='high'; setMenu();
       const table=document.getElementById('hsTable');
       const msg=document.getElementById('hsMsg');
-      let insertPos=-1;
-      if(newScore!=null && scoreFits(newScore)){
-        // find insertion position (highest slot whose score < newScore)
-        insertPos=9; while(insertPos>0 && scores[insertPos-1].score < newScore) insertPos--;
-        scores.splice(9,1); scores.splice(insertPos,0,{name:'', score:newScore});
-      }
+      showScreen('high'); buildPanels();
+      msg.style.display='none';
+      table.innerHTML='<tr><td colspan="3" style="color:#0a8">loading…</td></tr>';
+
+      await refreshScores(); // pull the latest global top-10
+
+      let entering = (newScore!=null && scoreFits(newScore));
+      let insertPos = -1;
+      if(entering){ insertPos = scores.length-1; while(insertPos>0 && scores[insertPos-1].score < newScore) insertPos--; }
+
       function paint(){
         table.innerHTML='';
-        scores.forEach((s,i)=>{
+        const rows = scores.slice();
+        if(entering){ rows.splice(9,1); rows.splice(insertPos,0,{name:'', score:newScore, _new:true}); }
+        rows.forEach((s,i)=>{
           const tr=document.createElement('tr');
-          const isNew = (i===insertPos && s.name==='');
           tr.innerHTML = `<td>${i+1}.</td><td class="nm"></td><td class="sc">${s.score}</td>`;
           const nm=tr.querySelector('.nm');
-          if(isNew){
+          if(s._new){
             const inp=document.createElement('input'); inp.maxLength=14; inp.placeholder='your name';
-            inp.onkeydown=e=>{ if(e.key==='Enter'){ engrave(inp.value.trim()||'Player'); } e.stopPropagation(); };
+            inp.onkeydown=async e=>{
+              e.stopPropagation();
+              if(e.key==='Enter'){
+                e.preventDefault();
+                const who = inp.value.trim().slice(0,14) || 'Player';
+                entering=false; msg.style.display='none';
+                table.innerHTML='<tr><td colspan="3" style="color:#0a8">saving…</td></tr>';
+                await submitScore(who, newScore);
+                paint();
+              }
+            };
             nm.appendChild(inp); setTimeout(()=>inp.focus(),0);
           } else nm.textContent=s.name||'None';
           table.appendChild(tr);
         });
       }
-      function engrave(name){ scores[insertPos].name=name; insertPos=-1; saveScores(scores); msg.style.display='none'; paint(); updateStats(); }
-      msg.style.display = insertPos>=0 ? 'block' : 'none';
+      msg.style.display = entering ? 'block' : 'none';
       paint();
-      showScreen('high'); buildPanels();
     }
 
     // ---- menu wiring ----------------------------------------------------
@@ -419,6 +475,7 @@
 
     // ---- go -------------------------------------------------------------
     buildPanels(); showScreen('title'); setMenu();
+    refreshScores();   // load the global leaderboard for the HIGH display
     requestAnimationFrame(render);
   })();
   </script>
