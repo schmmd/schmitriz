@@ -6,6 +6,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#050506">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/png" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
 <title>Schmitriz</title>
 <style>
   :root { --ink:#00c8a5; --accent:#ff2a2e; --dim:#0a0a0c; }
@@ -594,6 +598,13 @@
     refreshScores();   // load the global leaderboard for the HIGH display
     requestAnimationFrame(render);
   })();
+  </script>
+
+  <script>
+  // Register the service worker so the game is playable offline after one load.
+  if ('serviceWorker' in navigator) {
+    addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+  }
   </script>
 </body>
 </html>
