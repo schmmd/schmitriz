@@ -9,13 +9,14 @@ falls *up* from the bottom, fighting over a moving centre line.
 
 ## Play / host
 
-Everything lives in [`web/`](web/) and is fully self-contained — the original
-tilesets and background art are embedded in `web/assets.js` as data URIs, so
+Everything lives in [`docs/`](docs/) and is fully self-contained — the original
+tilesets and background art are embedded in `docs/assets.js` as data URIs, so
 there are no external requests.
 
-- **Locally:** open `web/index.html` in any modern browser (double-click works).
-- **Hosted:** copy the `web/` folder to any static host (GitHub Pages, Netlify,
-  S3, …). No build step, no server code.
+- **Locally:** open `docs/index.html` in any modern browser (double-click works).
+- **Hosted:** copy the `docs/` folder to any static host (GitHub Pages, Netlify,
+  S3, …). No build step, no server code. On GitHub Pages, set the source to this
+  branch and the `/docs` folder.
 
 ## Controls
 
@@ -34,10 +35,10 @@ High scores are kept in the browser's `localStorage`.
 
 ## Files
 
-- `web/index.html` — UI, canvas renderer, screens, input, high scores
-- `web/schmitriz.js` — the ported game engine (board, pieces, controllers, timers)
-- `web/assets.js` — embedded original tilesets / theme backgrounds / title art
-- `web/build_assets.py` — regenerates `assets.js` from the original art
+- `docs/index.html` — UI, canvas renderer, screens, input, high scores
+- `docs/schmitriz.js` — the ported game engine (board, pieces, controllers, timers)
+- `docs/assets.js` — embedded original tilesets / theme backgrounds / title art
+- `docs/build_assets.py` — regenerates `assets.js` from the original art
 
 ## Regenerating assets
 
@@ -48,7 +49,7 @@ rebuild the bundle:
 
 ```sh
 git checkout 8ade326 -- tilesets themes Images   # restore the original art
-python3 web/build_assets.py                       # rewrites web/assets.js
+python3 docs/build_assets.py                      # rewrites docs/assets.js
 ```
 
 The tileset BMPs use magenta (`255, 0, 255`) as a colour key; the build script

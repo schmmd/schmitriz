@@ -98,7 +98,7 @@ title = jpg_datauri(os.path.join(ROOT, "Images", "title.jpg"))
 out = "// Auto-generated from original Schmitriz assets. Do not edit by hand.\n"
 out += "const ASSETS = " + json.dumps({"tilesets": tilesets, "themes": themes, "title": title}) + ";\n"
 
-path = os.path.join(ROOT, "web", "assets.js")
+path = os.path.join(ROOT, "docs", "assets.js")
 os.makedirs(os.path.dirname(path), exist_ok=True)
 open(path, "w").write(out)
 print("wrote", path, "bytes:", len(out))
