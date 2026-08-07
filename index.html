@@ -88,15 +88,17 @@
 
   @media (max-width:600px), (pointer:coarse) {
     body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
-    h1.wordmark { font-size:18px; letter-spacing:4px; margin:6px 0 2px; }
+    h1.wordmark { font-size:15px; letter-spacing:3px; margin:4px 0 2px; }
     .tag { display:none; }
-    .menubar { gap:5px; margin-bottom:8px; }
-    .menubar button { padding:8px 12px; font-size:12px; }  /* larger tap targets */
-    .opts { gap:10px; margin-bottom:8px; }
+    .menubar { gap:5px; margin-bottom:6px; flex-wrap:nowrap; }
+    .menubar button { padding:7px 9px; font-size:12px; white-space:nowrap; }
+    .opts { display:none; }        /* hide tileset/theme/grid/next on phones to maximise the board */
 
-    /* stack the board and stats vertically; the board fills the width it can */
-    .stage { flex-direction:column; gap:8px; width:100%; }
-    #board { height:min(64dvh, 78vw*2); width:auto; max-width:96vw; }
+    /* stack + CENTER the board; size it as large as fits within the width and
+       the viewport height left after the (now minimal) chrome. dvh keeps the
+       browser address bar from clipping it. */
+    .stage { flex-direction:column; gap:6px; width:100%; align-items:center; }
+    #board { width:auto; height:auto; max-width:98vw; max-height:calc(100dvh - 124px); }
     /* stats become a single compact horizontal strip under the board */
     .panel { min-width:0; width:100%; }
     .panel .panel { display:flex; flex-wrap:wrap; justify-content:center; gap:12px; }
@@ -109,7 +111,7 @@
     .bigbtn { padding:11px 22px; }
 
     .legend { display:none; }                              /* hide the keyboard legend */
-    .touchhint { display:block; font-size:11px; color:#777; margin-top:10px; line-height:1.7; text-align:center; }
+    .touchhint { display:block; font-size:10px; color:#777; margin-top:5px; line-height:1.5; text-align:center; }
     .touchhint b { color:#0a9; }
   }
 </style>
@@ -123,6 +125,7 @@
     <button id="mPause" disabled>Pause</button>
     <button id="mEnd" disabled>End</button>
     <button id="mHigh">High Scores</button>
+    <button id="mFull" hidden title="Fullscreen" aria-label="Fullscreen">&#9974;</button>
   </div>
 
   <div class="opts">
@@ -586,6 +589,33 @@
     document.getElementById('titleStart').onclick = toNewGame;
     document.getElementById('startGame').onclick = startGame;
     document.getElementById('hsNew').onclick = toNewGame;
+
+    // ---- fullscreen toggle ----------------------------------------------
+    // Fills the whole screen where the Fullscreen API is supported (Android
+    // Chrome, desktop). iOS Safari doesn't support it — those users get the
+    // same effect by installing to the home screen (display:standalone).
+    (function(){
+      const btn = document.getElementById('mFull');
+      const root = document.documentElement;
+      const canFS = !!(root.requestFullscreen || root.webkitRequestFullscreen);
+      if(!canFS) return;                       // leave the button hidden
+      btn.hidden = false;
+      const isFS = ()=> document.fullscreenElement || document.webkitFullscreenElement;
+      btn.onclick = ()=>{
+        if(isFS()){ (document.exitFullscreen||document.webkitExitFullscreen).call(document); }
+        else { (root.requestFullscreen||root.webkitRequestFullscreen).call(root); }
+      };
+      const sync = ()=>{ btn.title = isFS() ? 'Exit fullscreen' : 'Fullscreen'; btn.classList.toggle('on', !!isFS()); };
+      document.addEventListener('fullscreenchange', sync);
+      document.addEventListener('webkitfullscreenchange', sync);
+    })();
+
+    // On phones, shorten the menu labels so the bar stays a single row
+    // (a second row would eat into the board's height).
+    if (matchMedia('(max-width:600px), (pointer:coarse)').matches){
+      const short = { mNew:'New', mHigh:'Scores' };
+      for (const id in short){ const b=document.getElementById(id); if(b) b.textContent=short[id]; }
+    }
 
     // ---- controls legend ------------------------------------------------
     document.getElementById('legend').innerHTML =
