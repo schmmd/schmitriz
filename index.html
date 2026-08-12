@@ -32,6 +32,10 @@
   }
   .menubar button:hover:not(:disabled) { color:#ff6b6e; border-color:#444; }
   .menubar button:disabled { color:#3a3a3a; cursor:default; }
+  /* toggle-style menubar button (e.g. Grid) — lit when active */
+  .menubar button.toggle { color:var(--ink); border-color:#263; }
+  .menubar button.toggle.on { background:#0a9; color:#041; border-color:#0fc; }
+  #mGrid { display:none; }   /* desktop uses the Grid checkbox in .opts instead */
 
   .opts { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; align-items:center; margin-bottom:14px; font-size:11px; color:#888; }
   .opts select { background:#141416; color:#cfcfcf; border:1px solid #2a2a2e; padding:3px 4px; border-radius:3px; }
@@ -92,6 +96,7 @@
     .tag { display:none; }
     .menubar { gap:5px; margin-bottom:6px; flex-wrap:nowrap; }
     .menubar button { padding:7px 9px; font-size:12px; white-space:nowrap; }
+    #mGrid { display:inline-block; }   /* the Grid toggle replaces the hidden .opts checkbox on phones */
     .opts { display:none; }        /* hide tileset/theme/grid/next on phones to maximise the board */
 
     /* stack + CENTER the board; size it as large as fits within the width and
@@ -114,6 +119,14 @@
     .touchhint { display:block; font-size:10px; color:#777; margin-top:5px; line-height:1.5; text-align:center; }
     .touchhint b { color:#0a9; }
   }
+
+  /* In fullscreen the board grows to fill the screen and its corners can be
+     clipped by the device's rounded display corners. Inset it slightly so the
+     whole playfield stays visible. */
+  :root:fullscreen #board, :root:-webkit-full-screen #board {
+    max-width: 92vw;
+    max-height: calc(100dvh - 150px);
+  }
 </style>
 </head>
 <body>
@@ -125,6 +138,7 @@
     <button id="mPause" disabled>Pause</button>
     <button id="mEnd" disabled>End</button>
     <button id="mHigh">High Scores</button>
+    <button id="mGrid" class="toggle" title="Grid" aria-label="Toggle grid">Grid</button>
     <button id="mFull" hidden title="Fullscreen" aria-label="Fullscreen">&#9974;</button>
   </div>
 
@@ -196,7 +210,17 @@
     ASSETS.themes.forEach((t,i)=> selTheme.add(new Option(t.name,i)));
     selTiles.onchange = ()=>{ ui.tileset=+selTiles.value; tilesetImg.src=ASSETS.tilesets[ui.tileset].src; renderPreviews(); };
     selTheme.onchange = ()=>{ ui.theme=+selTheme.value; themeImg.src=ASSETS.themes[ui.theme].src; statInk=ASSETS.themes[ui.theme].text; applyInk(); applyHighBg(); };
-    document.getElementById('cbGrid').onchange = e=> ui.grid=e.target.checked;
+    // Grid can be toggled from either the desktop checkbox or the mobile
+    // menubar button; keep both in sync with ui.grid.
+    const cbGrid = document.getElementById('cbGrid');
+    const mGrid  = document.getElementById('mGrid');
+    function setGrid(on){
+      ui.grid = on;
+      cbGrid.checked = on;
+      mGrid.classList.toggle('on', on);
+    }
+    cbGrid.onchange = e=> setGrid(e.target.checked);
+    mGrid.onclick   = ()=> setGrid(!ui.grid);
     document.getElementById('cbNext').onchange = e=>{ ui.next=e.target.checked; if(game) game.showNext=ui.next; buildPanels(); };
     document.getElementById('titleImg').src = ASSETS.title;
 
@@ -247,6 +271,7 @@
     //   hold centre -> soft drop      swipe down  -> hard drop
     // A tap fires on release as a single "pulse": the code is added now and
     // removed a couple of frames later, so the Key registers exactly one press.
+    const isTouch = ('ontouchstart' in window) || matchMedia('(pointer:coarse)').matches;
     function pulse(code){
       held.add(code);
       requestAnimationFrame(()=> requestAnimationFrame(()=> held.delete(code)));
@@ -450,6 +475,30 @@
           ctx.fillRect(b.nX, 0, 1, b.nTileY*b.nTileH);
           ctx.fillRect(b.nX+b.nTileX*b.nTileW, 0, 1, b.nTileY*b.nTileH);
         }
+        // Touch-zone hint: when the grid is on (on a touch device), subtly show
+        // which third of the board does what. The boundaries mirror zoneAt():
+        // fractions 0.36 / 0.64 of the canvas width (logical space is 200 wide).
+        if(ui.grid && isTouch && state==='game' && !game.paused){
+          const x1=200*0.36, x2=200*0.64, H=b.nTileY*b.nTileH;
+          ctx.save();
+          // faint full-height dividers marking the three zones
+          ctx.fillStyle='rgba(0,200,165,.14)';
+          ctx.fillRect(x1,0,1,H); ctx.fillRect(x2,0,1,H);
+          // labels — arrow glyph + caption, kept low-contrast so play isn't obscured
+          ctx.fillStyle='rgba(0,200,165,.42)';
+          ctx.textAlign='center'; ctx.textBaseline='middle';
+          const yG=H-30, yT=H-16;
+          ctx.font='bold 15px "Lucida Console",monospace';
+          ctx.fillText('◀', x1/2, yG);
+          ctx.fillText('↻', (x1+x2)/2, yG);
+          ctx.fillText('▶', (x2+200)/2, yG);
+          ctx.font='8px "Lucida Console",monospace';
+          ctx.fillText('MOVE',  x1/2, yT);
+          ctx.fillText('ROTATE',(x1+x2)/2, yT);
+          ctx.fillText('MOVE',  (x2+200)/2, yT);
+          ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+          ctx.restore();
+        }
         // overlays
         if(game.paused) banner('PAUSED');
         if(state==='gameover'){
@@ -613,7 +662,7 @@
     // On phones, shorten the menu labels so the bar stays a single row
     // (a second row would eat into the board's height).
     if (matchMedia('(max-width:600px), (pointer:coarse)').matches){
-      const short = { mNew:'New', mHigh:'Scores' };
+      const short = { mNew:'New', mHigh:'Scores', mGrid:'▦' };  // ▦ keeps the bar one row
       for (const id in short){ const b=document.getElementById(id); if(b) b.textContent=short[id]; }
     }
 
