@@ -280,10 +280,15 @@
     const HOLD_MS = 180;                    // centre press longer than this = soft drop
     const touch = { active:false, x0:0, y0:0, t0:0, zone:null, done:false, soft:false, holdT:0 };
     function inPlay(){ return state==='game' && game && !game.paused; }
+    // Zone boundaries snap to grid columns: the outer ~30% of columns on each
+    // side move, the (wider) middle rotates. Returns [leftSplitCol, rightSplitCol].
+    function zoneSplit(n){ const sl=Math.round(n*0.3); return [sl, n-sl]; }
     function zoneAt(clientX){
       const rect=canvas.getBoundingClientRect();
-      const fx=(clientX-rect.left)/rect.width;
-      return fx<0.36 ? 'left' : fx>0.64 ? 'right' : 'centre';
+      const lx=(clientX-rect.left)/rect.width*200;   // logical x (canvas is 200 wide)
+      const b=game.board, col=(lx-b.nX)/b.nTileW;    // board column under the touch
+      const [sl,sr]=zoneSplit(b.nTileX);
+      return col<sl ? 'left' : col>=sr ? 'right' : 'centre';
     }
     function endSoft(){ if(touch.soft){ held.delete(SOFT); touch.soft=false; } }
     canvas.addEventListener('touchstart', e=>{
@@ -479,37 +484,17 @@
           ctx.fillRect(b.nX, 0, 1, b.nTileY*b.nTileH);
           ctx.fillRect(b.nX+b.nTileX*b.nTileW, 0, 1, b.nTileY*b.nTileH);
         }
-        // Touch-zone hint: when the grid is on (on a touch device), subtly show
-        // which third of the board does what. The boundaries mirror zoneAt():
-        // fractions 0.36 / 0.64 of the canvas width (logical space is 200 wide).
-        // Each zone gets a faint full-height tint so the columns stay tellable
-        // apart even under stacked pieces; labels sit at the TOP, out of the pile.
+        // Touch-zone hint: when the grid is on (on a touch device), give the two
+        // MOVE zones a faint teal wash. Edges align with grid columns (see
+        // zoneAt); the wider centre ROTATE zone is left untinted.
         if(ui.grid && isTouch && state==='game' && !game.paused){
-          const x1=200*0.36, x2=200*0.64, H=400;   // full canvas height (logical)
+          const [sl,sr]=zoneSplit(b.nTileX);
+          const xL=b.nX, xR=b.nX+b.nTileX*b.nTileW, H=b.nTileY*b.nTileH;
+          const x1=b.nX+sl*b.nTileW, x2=b.nX+sr*b.nTileW;
           ctx.save();
-          // full-height tints: the two MOVE zones share a teal wash, the centre
-          // ROTATE zone a distinct warm wash, so all three read as different.
-          ctx.fillStyle='rgba(0,200,165,.07)';  ctx.fillRect(0,0,x1,H); ctx.fillRect(x2,0,200-x2,H);
-          ctx.fillStyle='rgba(255,120,60,.06)'; ctx.fillRect(x1,0,x2-x1,H);
-          // divider lines at the zone boundaries
-          ctx.fillStyle='rgba(0,200,165,.16)';
-          ctx.fillRect(x1,0,1,H); ctx.fillRect(x2,0,1,H);
-          // labels at the top — arrow glyph + caption, low-contrast
-          ctx.textAlign='center'; ctx.textBaseline='middle';
-          const yG=14, yT=27;
-          ctx.fillStyle='rgba(0,200,165,.5)';
-          ctx.font='bold 15px "Lucida Console",monospace';
-          ctx.fillText('◀', x1/2, yG);
-          ctx.fillText('▶', (x2+200)/2, yG);
-          ctx.fillStyle='rgba(255,150,90,.6)';
-          ctx.fillText('↻', (x1+x2)/2, yG);
-          ctx.font='8px "Lucida Console",monospace';
-          ctx.fillStyle='rgba(0,200,165,.5)';
-          ctx.fillText('MOVE',  x1/2, yT);
-          ctx.fillText('MOVE',  (x2+200)/2, yT);
-          ctx.fillStyle='rgba(255,150,90,.6)';
-          ctx.fillText('ROTATE',(x1+x2)/2, yT);
-          ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+          ctx.fillStyle='rgba(0,200,165,.045)';
+          ctx.fillRect(xL,0,x1-xL,H);   // left MOVE zone
+          ctx.fillRect(x2,0,xR-x2,H);   // right MOVE zone
           ctx.restore();
         }
         // overlays
