@@ -467,35 +467,48 @@
           ctx.fillStyle='rgb(25,25,25)'; ctx.fillRect(b.nX, yTop-1, b.nTileX*b.nTileW, 2);
         }
         // grid / borders
-        ctx.fillStyle='rgb(150,150,150)';
         if(ui.grid){
-          for(let x=0;x<=b.nTileX;x++) ctx.fillRect(b.nX+x*b.nTileW, 0, 1, b.nTileY*b.nTileH);
-          for(let y=0;y<=b.nTileY;y++) ctx.fillRect(b.nX, y*b.nTileH, b.nTileX*b.nTileW, 1);
+          // faint, thin interior grid. The canvas is 3x supersampled (S), so a
+          // 0.5-logical width renders as a light ~1.5px hairline.
+          const gw=0.5;
+          ctx.fillStyle='rgba(150,150,150,.28)';
+          for(let x=0;x<=b.nTileX;x++) ctx.fillRect(b.nX+x*b.nTileW, 0, gw, b.nTileY*b.nTileH);
+          for(let y=0;y<=b.nTileY;y++) ctx.fillRect(b.nX, y*b.nTileH, b.nTileX*b.nTileW, gw);
         } else {
+          ctx.fillStyle='rgb(150,150,150)';
           ctx.fillRect(b.nX, 0, 1, b.nTileY*b.nTileH);
           ctx.fillRect(b.nX+b.nTileX*b.nTileW, 0, 1, b.nTileY*b.nTileH);
         }
         // Touch-zone hint: when the grid is on (on a touch device), subtly show
         // which third of the board does what. The boundaries mirror zoneAt():
         // fractions 0.36 / 0.64 of the canvas width (logical space is 200 wide).
+        // Each zone gets a faint full-height tint so the columns stay tellable
+        // apart even under stacked pieces; labels sit at the TOP, out of the pile.
         if(ui.grid && isTouch && state==='game' && !game.paused){
-          const x1=200*0.36, x2=200*0.64, H=b.nTileY*b.nTileH;
+          const x1=200*0.36, x2=200*0.64, H=400;   // full canvas height (logical)
           ctx.save();
-          // faint full-height dividers marking the three zones
-          ctx.fillStyle='rgba(0,200,165,.14)';
+          // full-height tints: the two MOVE zones share a teal wash, the centre
+          // ROTATE zone a distinct warm wash, so all three read as different.
+          ctx.fillStyle='rgba(0,200,165,.07)';  ctx.fillRect(0,0,x1,H); ctx.fillRect(x2,0,200-x2,H);
+          ctx.fillStyle='rgba(255,120,60,.06)'; ctx.fillRect(x1,0,x2-x1,H);
+          // divider lines at the zone boundaries
+          ctx.fillStyle='rgba(0,200,165,.16)';
           ctx.fillRect(x1,0,1,H); ctx.fillRect(x2,0,1,H);
-          // labels — arrow glyph + caption, kept low-contrast so play isn't obscured
-          ctx.fillStyle='rgba(0,200,165,.42)';
+          // labels at the top — arrow glyph + caption, low-contrast
           ctx.textAlign='center'; ctx.textBaseline='middle';
-          const yG=H-30, yT=H-16;
+          const yG=14, yT=27;
+          ctx.fillStyle='rgba(0,200,165,.5)';
           ctx.font='bold 15px "Lucida Console",monospace';
           ctx.fillText('◀', x1/2, yG);
-          ctx.fillText('↻', (x1+x2)/2, yG);
           ctx.fillText('▶', (x2+200)/2, yG);
+          ctx.fillStyle='rgba(255,150,90,.6)';
+          ctx.fillText('↻', (x1+x2)/2, yG);
           ctx.font='8px "Lucida Console",monospace';
+          ctx.fillStyle='rgba(0,200,165,.5)';
           ctx.fillText('MOVE',  x1/2, yT);
-          ctx.fillText('ROTATE',(x1+x2)/2, yT);
           ctx.fillText('MOVE',  (x2+200)/2, yT);
+          ctx.fillStyle='rgba(255,150,90,.6)';
+          ctx.fillText('ROTATE',(x1+x2)/2, yT);
           ctx.textAlign='left'; ctx.textBaseline='alphabetic';
           ctx.restore();
         }
