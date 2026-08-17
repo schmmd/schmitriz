@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -14,7 +14,8 @@
 <style>
   :root { --ink:#00c8a5; --accent:#ff2a2e; --dim:#0a0a0c; }
   * { box-sizing: border-box; }
-  html, body { margin:0; height:100%; }
+  /* touch-action keeps double-tap zoom off the chrome; pinch zoom still works */
+  html, body { margin:0; height:100%; touch-action:manipulation; }
   body {
     background:#050506; color:#d8d8d8;
     font-family: "Lucida Console", Consolas, Menlo, monospace;
@@ -277,6 +278,10 @@
       requestAnimationFrame(()=> requestAnimationFrame(()=> held.delete(code)));
     }
     const SOFT = 'ArrowDown';               // P1 soft-drop (KeyFast) code
+    // P1 hard-drop code. Deliberately not 'Space': that is player 1's drop in a
+    // 1-player game but player 2's in a 2-player one, so a swipe would drop the
+    // opponent's piece. Digit0/Numpad0 are player 1's in both.
+    const HARD = 'Numpad0';
     const HOLD_MS = 180;                    // centre press longer than this = soft drop
     const touch = { active:false, x0:0, y0:0, t0:0, zone:null, done:false, soft:false, holdT:0 };
     function inPlay(){ return state==='game' && game && !game.paused; }
@@ -309,7 +314,7 @@
       const rect=canvas.getBoundingClientRect();
       if(!touch.soft && dy > Math.max(40, rect.height*0.10) && dy > Math.abs(dx)){
         clearTimeout(touch.holdT);
-        pulse('Space');                     // downward swipe -> hard drop (P1 drop code)
+        pulse(HARD);                        // downward swipe -> hard drop
         touch.done=true;
       } else if(!touch.soft && Math.hypot(dx,dy) > 16){
         clearTimeout(touch.holdT);          // moved too far to be a hold -> no soft drop
@@ -500,8 +505,9 @@
         // overlays
         if(game.paused) banner('PAUSED');
         if(state==='gameover'){
-          if(game.numPlayers===2) banner(game.loser===0?'PLAYER 2 WINS':'PLAYER 1 WINS');
-          else banner('GAME OVER');
+          if(game.numPlayers!==2) banner('GAME OVER');
+          else if(game.loser<0) banner('GAME ENDED');
+          else banner(game.loser===0?'PLAYER 2 WINS':'PLAYER 1 WINS');
         }
       }
     }
@@ -631,7 +637,9 @@
     // ---- menu wiring ----------------------------------------------------
     document.getElementById('mNew').onclick = toNewGame;
     document.getElementById('mPause').onclick = togglePause;
-    document.getElementById('mEnd').onclick = ()=>{ if(state==='game') game.end(0); };
+    // Abandoning a game has no loser — passing -1 keeps the 2-player banner from
+    // crowning an arbitrary winner.
+    document.getElementById('mEnd').onclick = ()=>{ if(state==='game') game.end(-1); };
     document.getElementById('mHigh').onclick = ()=>{ if(state!=='game') openHighscores(null); };
     document.getElementById('titleStart').onclick = toNewGame;
     document.getElementById('startGame').onclick = startGame;
@@ -679,8 +687,40 @@
 
   <script>
   // Register the service worker so the game is playable offline after one load.
+  // The cache answers first, so a new deploy would otherwise go unnoticed until
+  // the visit after next. The worker reports when one has landed; offer a reload
+  // rather than leaving the player on the old build.
   if ('serviceWorker' in navigator) {
-    addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+    let prompted = false;
+    const showUpdatePrompt = () => {
+      if (prompted) return;
+      prompted = true;
+      const bar = document.createElement('div');
+      bar.setAttribute('role', 'status');
+      bar.style.cssText = 'position:fixed;z-index:9999;left:50%;transform:translateX(-50%);' +
+        'bottom:calc(12px + env(safe-area-inset-bottom));display:flex;gap:10px;align-items:center;' +
+        'padding:8px 12px;border-radius:8px;background:#1c1c1c;color:#eee;' +
+        'font:13px/1.3 system-ui,sans-serif;box-shadow:0 2px 12px rgba(0,0,0,.45)';
+      bar.append('A new version is available.');
+      const reload = document.createElement('button');
+      reload.textContent = 'Reload';
+      reload.style.cssText = 'font:inherit;cursor:pointer;border:0;border-radius:6px;' +
+        'padding:4px 10px;background:#0a8;color:#fff';
+      reload.onclick = () => location.reload();
+      const dismiss = document.createElement('button');
+      dismiss.textContent = '×';
+      dismiss.setAttribute('aria-label', 'Dismiss');
+      dismiss.style.cssText = 'font:inherit;cursor:pointer;border:0;background:none;color:#999';
+      dismiss.onclick = () => bar.remove();
+      bar.append(reload, dismiss);
+      document.body.appendChild(bar);
+    };
+    addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+      navigator.serviceWorker.addEventListener('message', (e) => {
+        if (e.data && e.data.type === 'update-ready') showUpdatePrompt();
+      });
+    });
   }
   </script>
 </body>

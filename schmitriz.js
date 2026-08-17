@@ -135,8 +135,14 @@ class Board {
   }
   copyTo(p) {
     const m = SHAPES[p.type][p.rot];
-    for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++)
-      if (m[r][c]) this.set(p.type, p.x + c, p.y + r);
+    for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) {
+      if (!m[r][c]) continue;
+      const bx = p.x + c, by = p.y + r;
+      // An out-of-range row is dropped harmlessly by Int8Array, but an
+      // out-of-range column would wrap into the neighbouring row, so both
+      // axes are checked before writing.
+      if (bx >= 0 && bx < this.nTileX && by >= 0 && by < this.nTileY) this.set(p.type, bx, by);
+    }
   }
   // rows above iLine fall down one; top row emptied
   shiftDown(iLine) {
@@ -165,6 +171,19 @@ class Controller {
     this.lInitDrop = 0; this.lCurScore = 0; this.lCurLines = 0;
   }
   setBound(y) { this.lBoundryY = y; }
+
+  // A candidate placement is legal only if it clears the side walls, the
+  // settled cells, AND this player's own boundary — the floor in 1 player, the
+  // centre line in 2. The boundary test is what stops a piece rotating past the
+  // edge it is falling towards: boardCollide() ignores rows outside the board,
+  // so without it an upright piece could be spun through the floor and then
+  // locked with its overhanging cells silently discarded by copyTo().
+  blocked(p) {
+    const b = this.board;
+    if (b.horCollide(p) || b.boardCollide(p)) return true;
+    return this.Dir === DOWN ? b.downCollide(p, this.lBoundryY)
+                             : b.upCollide(p, this.lBoundryY);
+  }
 
   newRandom(p) { p.type = (Math.random() * 7) | 0; p.rot = (this.Dir === UP) ? 2 : 0; }
   setPoint(p) {
@@ -199,9 +218,15 @@ class Controller {
     this.processKeys(now, held);
 
     if (this.KeyDrop.isPressed()) {
+      // Drop bonus = rows between the piece's leading edge and the far wall of
+      // the board (as in the original: measured before the drop, so it ignores
+      // whatever stack breaks the fall). The UP player's leading edge is
+      // y + top, mirroring the DOWN player's y + bottom; omitting the metric
+      // here used to cost player 2 a point per drop on most pieces.
+      const m = METRICS[this.type][this.rot];
       this.lInitDrop = (this.Dir === DOWN)
-        ? this.board.nTileY - this.y - METRICS[this.type][this.rot].bottom
-        : this.y;
+        ? this.board.nTileY - this.y - m.bottom
+        : this.y + m.top;
       while (this.addGravity()) { /* fall to rest */ }
       return this.lInitDrop;
     }
@@ -214,7 +239,7 @@ class Controller {
     if (this.KeyFast.isPressed()) { if (fastDelay < this.gravity.get()) this.gravity.set(fastDelay, now); }
     else if (this.KeyFast.isReleased()) return -2;
 
-    if (!this.board.horCollide(nw) && !this.board.boardCollide(nw)) {
+    if (!this.blocked(nw)) {
       this.type = nw.type; this.rot = nw.rot; this.x = nw.x; this.y = nw.y;
     }
     return -10;
@@ -304,14 +329,18 @@ class Game {
 
     let plus = 5 + 2 * this.level + c.lInitDrop;
     if (this.showNext) plus -= (Math.floor(this.level / 2) + 2);
+    // Credit the piece before the spawn check below: the piece that fills the
+    // board still earned its points (and its lines are already counted), so
+    // banking it later would drop the final placement from the score sent to
+    // the leaderboard.
+    c.lCurScore += plus;
+    c.lInitDrop = 0;
 
     if (c.lCurLines > (this.level + 1) * this.linesPerLevel) this.levelUp(now);
 
-    if (this.board.boardCollide(c.next)) { this.end(c.iIndex); return; }
+    if (this.board.boardCollide(c.next)) { this.onScore(); this.end(c.iIndex); return; }
 
     c.nextPiece();
-    c.lInitDrop = 0;
-    c.lCurScore += plus;
     this.onScore();
     c.gravity.reset(now);
   }
